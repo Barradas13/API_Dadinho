@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://aluno:aluno@localhost:33306/banco_dados_api"
+  shadowDatabaseUrl = "mysql://aluno:aluno@localhost:33307/banco_dados_api_shadow"
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  nome  String
+  email String  @unique
+  senha String
+
+  // Relações: Um usuário pode...
+  participacoes Participante[] // ...participar de várias partidas
+  vitorias      Partida[]      @relation("Vencedor") // ...vencer várias partidas
+  jogadas       Jogada[]       // ...fazer várias jogadas
+
+  @@map("users")
+}
+
+model Partida {
+  id          Int       @id @default(autoincrement())
+  data_inicio DateTime  @default(now())
+  status      String    // ex: "AGUARDANDO", "EM_JOGO", "FINALIZADA"
+
+  vencedor_id Int?
+  vencedor    User?     @relation("Vencedor", fields: [vencedor_id], references: [id])
+
+  participantes Participante[]
+  rodadas       Rodada[]
+
+  @@map("partidas")
+}
+
+model Participante {
+  @@id([user_id, partida_id])
+
+  user_id         Int
+  partida_id      Int
+  numero_de_dados Int
+  ordem_no_turno  Int
+
+  user    User    @relation(fields: [user_id], references: [id])
+  partida Partida @relation(fields: [partida_id], references: [id])
+
+  @@map("participantes")
+}
+
+model Rodada {
+  id               Int    @id @default(autoincrement())
+  numero_da_rodada Int
+
+  partida_id Int
+  partida    Partida @relation(fields: [partida_id], references: [id])
+
+  jogadas    Jogada[]
+
+  @@map("rodadas")
+}
+
+model Jogada {
+  id                   Int     @id @default(autoincrement())
+  quantidade_declarada Int
+  valor_do_dado        Int
+  foi_duvidada         Boolean @default(false)
+
+  rodada_id Int
+  rodada    Rodada @relation(fields: [rodada_id], references: [id])
+
+  jogador_id Int
+  jogador    User    @relation(fields: [jogador_id], references: [id])
+
+  @@map("jogadas")
+}
