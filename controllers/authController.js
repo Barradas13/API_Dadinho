@@ -13,7 +13,8 @@ export const registerUser = async (req, res) => {
             return res.status(409).json({ message: 'Este e-mail já está em uso.' });
         }
         const newUser = await createUser({ nome, email, senha });
-        res.status(201).json(newUser);
+        const token = generateToken(newUser);
+        res.json({ token });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao registrar usuário.', error: error.message });
     }
